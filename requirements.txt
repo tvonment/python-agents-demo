@@ -1,0 +1,17 @@
+# Microsoft Semantic Kernel with Azure AI support
+semantic-kernel>=1.32.1
+
+# Azure dependencies for authentication and AI services
+azure-identity>=1.17.1
+azure-ai-inference>=1.0.0b6
+
+# Additional utilities
+python-dotenv>=1.0.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+
+# Development and testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+black>=24.0.0
+mypy>=1.10.0
