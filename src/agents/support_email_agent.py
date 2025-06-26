@@ -1,5 +1,6 @@
 """
-Support Email Agent - A specialized agent for handling support request emails with proper email formatting.
+Support Email Formatting Agent - A specialized agent for formatting responses as professional support emails.
+This agent focuses ONLY on email formatting and does NOT perform knowledge retrieval to avoid orchestration loops.
 """
 
 import os
@@ -11,7 +12,6 @@ from semantic_kernel import Kernel
 from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.contents import ChatHistory
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
-from agents.qna_agent import QnAAgent
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
@@ -19,11 +19,12 @@ logger.setLevel(logging.INFO)
 
 
 class SupportEmailAgent:
-    """A specialized agent for handling support request emails with proper email formatting."""
+    """A specialized agent for formatting responses as professional support emails. 
+    This agent focuses ONLY on email formatting and does NOT perform knowledge retrieval."""
     
     def __init__(self):
-        """Initialize the Support Email agent with QnA agent integration."""
-        logger.info("📧 Initializing Support Email Agent...")
+        """Initialize the Support Email Formatting agent."""
+        logger.info("📧 Initializing Support Email Formatting Agent...")
         start_time = time.time()
         
         try:
@@ -31,17 +32,13 @@ class SupportEmailAgent:
             logger.info("✅ Support Email Kernel created successfully")
             
             self.agent = self._create_agent()
-            logger.info("✅ Support Email Agent created successfully")
-            
-            # Initialize QnA agent for knowledge retrieval
-            self.qna_agent = QnAAgent()
-            logger.info("✅ QnA Agent integration initialized")
+            logger.info("✅ Support Email Formatting Agent created successfully")
             
             init_time = time.time() - start_time
-            logger.info(f"🎉 Support Email Agent fully initialized in {init_time:.2f}s")
+            logger.info(f"🎉 Support Email Formatting Agent fully initialized in {init_time:.2f}s")
             
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Support Email Agent: {e}")
+            logger.error(f"❌ Failed to initialize Support Email Formatting Agent: {e}")
             raise
     
     def _create_kernel(self) -> Kernel:
@@ -85,34 +82,27 @@ class SupportEmailAgent:
         """Create the ChatCompletionAgent with email formatting instructions."""
         return ChatCompletionAgent(
             kernel=self.kernel,
-            name="Support_Email_Agent",
-            instructions="""You are a professional Customer Support Email Specialist. Your role is to:
+            name="Support_Email_Formatter",
+            instructions="""You are a Professional Email Formatting Specialist. Your ONLY role is to format given content as professional support emails.
 
-1. **Email Formatting Expert**: Format responses as professional support emails with proper structure
-2. **Professional Tone**: Maintain a friendly, helpful, and professional email tone
-3. **Email Structure**: Use proper email formatting including:
-   - Professional greeting
-   - Clear subject line suggestions when needed
-   - Well-structured body with paragraphs
+🚨 IMPORTANT: You do NOT retrieve knowledge or answer questions. You ONLY format provided content into proper email structure.
+
+**Your Responsibilities:**
+1. **Email Structure Only**: Format provided content into proper email structure
+2. **Professional Tone**: Maintain friendly, helpful, professional email tone  
+3. **Email Components**:
+   - Professional greeting (use customer name if provided)
+   - Well-structured body with clear paragraphs
    - Professional closing
-   - Signature line placeholder
+   - Required signature (see below)
 
-4. **Support Integration**: Use knowledge base information to provide accurate answers
-5. **Email Best Practices**:
-   - Use clear, concise language
-   - Include actionable steps when applicable
-   - Acknowledge the customer's issue/concern
-   - Provide next steps or follow-up information
-   - Include relevant case/ticket references when needed
+4. **Email Best Practices**:
+   - Clear, concise language
+   - Logical paragraph structure
+   - Acknowledge customer concerns when mentioned
+   - Professional formatting
 
-6. **Response Guidelines**:
-   - Always start with a professional greeting
-   - Acknowledge the customer's inquiry
-   - Provide the requested information clearly
-   - Offer additional help
-   - End with a professional closing
-
-7. **Required Signature**: Always end your email responses with this exact signature:
+5. **Required Signature**: Always end emails with this exact signature:
 
 Best regards,  
 Thomas von Mentlen
@@ -120,7 +110,25 @@ Customer Support Team
 Nakamo
 tvm@nakamo.io
 
-Format your responses as complete email replies that can be sent directly to customers."""
+**Input Format Expectations:**
+You will receive content that may include:
+- Customer information (name, email, subject)
+- Question/issue description
+- Answer/solution content (already provided by other agents)
+
+**Your Task**: Format this into a complete, professional email response ready to send.
+
+**You do NOT:**
+- Look up information
+- Answer questions yourself
+- Make decisions about content
+- Call other agents or services
+
+**You DO:**
+- Format provided content professionally
+- Structure emails properly
+- Apply professional tone
+- Add required signature"""
         )
     
     def is_email_format(self, message: str) -> bool:
@@ -180,70 +188,41 @@ Format your responses as complete email replies that can be sent directly to cus
         
         return info
     
-    async def get_support_answer(self, question: str) -> str:
-        """Get answer from QnA agent for the support question."""
-        try:
-            logger.info(f"📋 Getting support answer for: {question[:100]}...")
-            answer = await self.qna_agent.answer_question(question)
-            logger.info("✅ Support answer retrieved successfully")
-            return answer
-        except Exception as e:
-            logger.error(f"❌ Error getting support answer: {e}")
-            return "I apologize, but I'm currently unable to access our knowledge base. Please contact our support team directly for assistance."
-    
-    async def invoke(self, user_message: str, chat_history: Optional[ChatHistory] = None) -> str:
-        """Main method to invoke the support email agent.
+    async def format_email_response(self, content: str, customer_info: Optional[Dict[str, Any]] = None) -> str:
+        """Format provided content as a professional support email response.
         
         Args:
-            user_message: The user's message (potentially in email format)
-            chat_history: Optional chat history
+            content: The content to format (question + answer provided by orchestration)
+            customer_info: Optional customer information (name, email, subject)
             
         Returns:
             Professionally formatted email response
         """
         try:
-            if chat_history is None:
-                chat_history = ChatHistory()
+            logger.info("� Formatting content as professional email response...")
             
-            logger.info(f"📧 Processing support email request...")
+            # Create formatting prompt
+            customer_name = customer_info.get('customer_name', 'Valued Customer') if customer_info else 'Valued Customer'
+            subject = customer_info.get('subject', 'Support Request') if customer_info else 'Support Request'
             
-            # Check if this is an email format
-            if not self.is_email_format(user_message):
-                logger.info("📝 Message not in email format, treating as regular support question")
-                # For non-email format, still provide email-style response
-                support_answer = await self.get_support_answer(user_message)
-                
-                # Create email-formatted response
-                email_prompt = f"""
-The customer asked: {user_message}
+            formatting_prompt = f"""Please format the following content as a professional support email response:
 
-Our support information: {support_answer}
+Customer Name: {customer_name}
+Subject: {subject}
 
-Please format this as a professional support email response.
-"""
-            else:
-                logger.info("📧 Email format detected, extracting information...")
-                email_info = self.extract_email_info(user_message)
-                
-                # Get answer from QnA agent
-                question = email_info.get("main_question", user_message)
-                support_answer = await self.get_support_answer(question)
-                
-                # Create contextualized email response
-                email_prompt = f"""
-Customer Email Information:
-- Subject: {email_info.get('subject', 'Support Request')}
-- Customer Name: {email_info.get('customer_name', 'Valued Customer')}
-- Email: {email_info.get('sender_email', 'N/A')}
-- Question: {question}
+Content to format:
+{content}
 
-Our support information: {support_answer}
+Format this as a complete professional email response with:
+1. Professional greeting using customer name
+2. Well-structured body 
+3. Professional closing
+4. Required signature
 
-Please format this as a professional support email reply, addressing the customer by name when available.
-"""
+Make it ready to send directly to the customer."""
             
-            # Add the prompt to chat history
-            chat_history.add_user_message(email_prompt)
+            chat_history = ChatHistory()
+            chat_history.add_user_message(formatting_prompt)
             
             # Invoke the agent and collect response
             response_content = ""
@@ -253,60 +232,85 @@ Please format this as a professional support email reply, addressing the custome
                 else:
                     response_content += str(response)
             
-            # Add agent response to chat history
-            chat_history.add_assistant_message(response_content)
-            
-            logger.info("✅ Support email response generated successfully")
+            logger.info("✅ Email formatting completed successfully")
             return response_content
             
         except Exception as e:
-            logger.error(f"❌ Error processing support email request: {e}")
-            return f"""
-Dear Valued Customer,
+            logger.error(f"❌ Error formatting email response: {e}")
+            return self._create_fallback_email(content, customer_name)
+    
+    def _create_fallback_email(self, content: str, customer_name: str = "Valued Customer") -> str:
+        """Create a fallback email when formatting fails."""
+        return f"""Dear {customer_name},
 
 Thank you for contacting our support team.
 
-I apologize, but I'm currently experiencing technical difficulties and unable to process your request at this time. Please contact our support team directly, and we'll be happy to assist you promptly.
+{content}
 
-Best regards,
-Customer Support Team
+If you have any additional questions, please don't hesitate to reach out.
 
----
-If this issue persists, please contact support@company.com
-"""
+Best regards,  
+Thomas von Mentlen
+Customer Support Team  
+Nakamo
+tvm@nakamo.io"""
+    
+    async def invoke(self, content: str, customer_info: Optional[Dict[str, Any]] = None, chat_history: Optional[ChatHistory] = None) -> str:
+        """Main method to invoke the email formatting agent.
+        
+        Args:
+            content: The content to format as an email (typically question + answer from other agents)
+            customer_info: Optional customer information extracted from original request
+            chat_history: Optional chat history (not used in formatting but kept for compatibility)
+            
+        Returns:
+            Professionally formatted email response
+        """
+        return await self.format_email_response(content, customer_info)
 
 
 # Example usage and testing
 if __name__ == "__main__":
     import asyncio
     
-    async def test_support_email_agent():
-        """Test the Support Email Agent with sample emails."""
+    async def test_email_formatting_agent():
+        """Test the Email Formatting Agent with sample content."""
         try:
             agent = SupportEmailAgent()
             
-            # Test email format
-            sample_email = """
-Subject: Account Login Issues
+            # Test formatting with content already provided
+            content = """Question: I'm having trouble logging into my account. I keep getting an error message that says "Invalid credentials" even though I'm sure my password is correct.
 
-Dear Support Team,
+Answer: This is usually caused by one of the following issues:
 
-I'm having trouble logging into my account. I keep getting an error message that says "Invalid credentials" even though I'm sure my password is correct. Can you please help me resolve this?
+1. **Password Reset Needed**: Your password may have expired or been reset for security reasons.
+2. **Browser Cache**: Clear your browser cache and cookies, then try again.
+3. **Caps Lock**: Ensure Caps Lock is off when entering your password.
+4. **Account Lock**: Your account may be temporarily locked after multiple failed attempts.
 
-Best regards,
-John Smith
-john.smith@email.com
-"""
+**Solution Steps:**
+1. Try resetting your password using the "Forgot Password" link
+2. Clear your browser cache and cookies
+3. Wait 15 minutes if account is locked, then try again
+4. Contact support if issues persist
+
+We're here to help ensure you can access your account securely."""
             
-            print("Testing Support Email Agent...")
+            customer_info = {
+                'customer_name': 'John Smith',
+                'subject': 'Account Login Issues',
+                'sender_email': 'john.smith@email.com'
+            }
+            
+            print("Testing Email Formatting Agent...")
             print("=" * 50)
             
-            response = await agent.invoke(sample_email)
-            print("Email Response:")
+            response = await agent.format_email_response(content, customer_info)
+            print("Formatted Email Response:")
             print(response)
             
         except Exception as e:
             print(f"Test failed: {e}")
     
     # Run the test
-    asyncio.run(test_support_email_agent())
+    asyncio.run(test_email_formatting_agent())
