@@ -10,14 +10,14 @@ This solution demonstrates a clean multi-agent architecture using:
 - **QnA Agent**: Handles question-answering with specialized system prompts
 - **Semantic Kernel**: Microsoft's AI orchestration framework
 - **Azure AI Foundry**: Model hosting and management (without hubs)
-- **Managed Identity**: Secure authentication using DefaultAzureCredential
+- **API Key Authentication**: Secure authentication using Azure OpenAI API keys
 - **React Frontend**: Modern web interface for interaction
 
 ## 🚀 Features
 
 - ✅ Multi-agent orchestration with Semantic Kernel
 - ✅ Azure AI Foundry integration (new resource model)
-- ✅ Managed Identity authentication (no API keys)
+- ✅ API Key authentication for secure access
 - ✅ Modern React frontend with real-time chat
 - ✅ Conversation threading and history
 - ✅ Professional UI with loading states
@@ -27,7 +27,7 @@ This solution demonstrates a clean multi-agent architecture using:
 
 1. **Azure AI Foundry Resource** (the new model without hubs)
 2. **Azure OpenAI model deployment** (e.g., gpt-4o)
-3. **Managed Identity** configured for your environment
+3. **Azure OpenAI API Key** for authentication
 4. **Python 3.8+** and **Node.js 16+**
 
 ## ⚙️ Setup
@@ -87,20 +87,18 @@ The React app will start on `http://localhost:3000`
 
 ## 🔧 Authentication
 
-This project uses **Azure Managed Identity** for secure authentication:
+This project uses **Azure OpenAI API Key** authentication for secure access:
 
-- **Development**: Uses `DefaultAzureCredential` which tries various auth methods
-- **Production**: Will use the managed identity assigned to your Azure resource
-- **No API keys required** - fully managed authentication
+- **Simple Setup**: Just set your `AZURE_OPENAI_API_KEY` environment variable
+- **Secure**: API keys provide controlled access to your Azure resources
+- **Reliable**: Direct authentication without complex credential chains
 
-### Authentication Flow
+### Required Environment Variables
 
-1. `DefaultAzureCredential` attempts authentication in this order:
-   - Environment variables
-   - Managed Identity
-   - Azure CLI credentials
-   - Visual Studio credentials
-   - Other available credential providers
+Make sure you have these set in your `.env` file:
+- `AZURE_AI_FOUNDRY_ENDPOINT`: Your Azure AI Foundry endpoint URL
+- `AZURE_OPENAI_API_KEY`: Your Azure OpenAI API key
+- `AZURE_OPENAI_DEPLOYMENT_NAME`: Your model deployment name
 
 ## 📁 Project Structure
 
@@ -188,7 +186,7 @@ Response:
 
 - [Semantic Kernel Documentation](https://learn.microsoft.com/en-us/semantic-kernel/)
 - [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/)
-- [Azure Managed Identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/)
+- [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
 
 ## 🤝 Contributing
 

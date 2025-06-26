@@ -53,7 +53,7 @@ async def demo_orchestrator():
         print("\nPlease check:")
         print("1. Your Azure AI Foundry endpoint is correct")
         print("2. Your deployment name is correct") 
-        print("3. You have proper authentication (az login or managed identity)")
+        print("3. You have the correct AZURE_OPENAI_API_KEY set")
 
 
 async def demo_customer_support():

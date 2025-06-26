@@ -63,34 +63,20 @@ class QnAAgent:
         if not deployment_name:
             raise ValueError("AZURE_OPENAI_DEPLOYMENT_NAME environment variable is required")
         
-        # Try API key first (for local development), then managed identity (for Azure environments)
+        # Use API key authentication
+        if not api_key:
+            raise ValueError("AZURE_OPENAI_API_KEY environment variable is required")
+        
         try:
-            if api_key:
-                logger.info(f"🔑 QnA using API key authentication for {deployment_name}")
-                chat_completion = AzureChatCompletion(
-                    endpoint=endpoint,
-                    deployment_name=deployment_name,
-                    api_key=api_key
-                )
-            else:
-                logger.info(f"🔐 QnA using managed identity authentication for {deployment_name}")
-                # For Azure CLI or managed identity
-                from azure.identity import AzureCliCredential, ChainedTokenCredential, ManagedIdentityCredential
-                
-                # Try Azure CLI first (for local dev), then managed identity
-                credential = ChainedTokenCredential(
-                    AzureCliCredential(),
-                    ManagedIdentityCredential()
-                )
-                
-                chat_completion = AzureChatCompletion(
-                    endpoint=endpoint,
-                    deployment_name=deployment_name,
-                    ad_token_provider=credential.get_token
-                )
+            logger.info(f"� QnA using API key authentication for {deployment_name}")
+            chat_completion = AzureChatCompletion(
+                endpoint=endpoint,
+                deployment_name=deployment_name,
+                api_key=api_key
+            )
         except Exception as e:
             logger.error(f"❌ QnA Authentication failed: {e}")
-            raise ValueError(f"Failed to authenticate with Azure: {e}. Please set AZURE_OPENAI_API_KEY or ensure Azure CLI is logged in.")
+            raise ValueError(f"Failed to authenticate with Azure: {e}. Please ensure AZURE_OPENAI_API_KEY is set correctly.")
         
         kernel.add_service(chat_completion)
         logger.info("✅ QnA Azure OpenAI service added to kernel")

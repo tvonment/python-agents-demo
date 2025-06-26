@@ -92,29 +92,15 @@ class CustomerSupportDB:
             if not endpoint:
                 raise ValueError("AZURE_AI_FOUNDRY_ENDPOINT environment variable is required")
             
-            if api_key:
-                logger.info("🔑 Using API key authentication for embeddings")
-                self.openai_client = AsyncAzureOpenAI(
-                    azure_endpoint=endpoint,
-                    api_key=api_key,
-                    api_version="2024-02-15-preview"
-                )
-            else:
-                logger.info("🔐 Using managed identity authentication for embeddings")
-                from azure.identity import AzureCliCredential, ChainedTokenCredential, ManagedIdentityCredential
-                
-                credential = ChainedTokenCredential(
-                    AzureCliCredential(),
-                    ManagedIdentityCredential()
-                )
-                
-                token = credential.get_token("https://cognitiveservices.azure.com/.default")
-                
-                self.openai_client = AsyncAzureOpenAI(
-                    azure_endpoint=endpoint,
-                    azure_ad_token=token.token,
-                    api_version="2024-02-15-preview"
-                )
+            if not api_key:
+                raise ValueError("AZURE_OPENAI_API_KEY environment variable is required")
+            
+            logger.info("� Using API key authentication for embeddings")
+            self.openai_client = AsyncAzureOpenAI(
+                azure_endpoint=endpoint,
+                api_key=api_key,
+                api_version="2024-02-15-preview"
+            )
             
             logger.info("✅ Azure OpenAI client initialized for embeddings")
             
