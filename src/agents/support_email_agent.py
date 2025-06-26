@@ -184,7 +184,7 @@ Format your responses as complete email replies that can be sent directly to cus
         """Get answer from QnA agent for the support question."""
         try:
             logger.info(f"📋 Getting support answer for: {question[:100]}...")
-            answer = await self.qna_agent.invoke(question)
+            answer = await self.qna_agent.answer_question(question)
             logger.info("✅ Support answer retrieved successfully")
             return answer
         except Exception as e:
