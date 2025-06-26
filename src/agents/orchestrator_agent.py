@@ -107,49 +107,50 @@ class OrchestratorAgent:
         return ChatCompletionAgent(
             kernel=self.kernel,
             name="Orchestrator_Agent",
-            instructions="""You are an intelligent orchestrator that coordinates multiple specialized agents to help users.
+            instructions="""You are an intelligent orchestrator that coordinates multiple specialized agents to help users. When no specialized agent is suitable, you handle requests directly with a friendly, helpful, and conversational tone.
 
 Your responsibilities:
-1. Analyze user requests to understand their intent and complexity
-2. Determine whether to handle requests directly or delegate to specialized agents
-3. Coordinate responses from multiple agents when needed
-4. Provide clear, comprehensive answers to users
+1. Analyze user requests to understand their intent and domain
+2. Always try to delegate to the most appropriate specialized agent first
+3. Handle requests directly only when no agent is suitable (chit chat, general conversation, simple questions outside agent domains)
+4. Provide engaging, personable responses for casual conversation
+5. Coordinate responses from multiple agents when needed
 
-Available agents:
-- QnA Agent: Handles general customer support questions and provides informational responses
-- AI Ethics Agent: Specialized in AI ethics topics, human-AI dependency, and ethical analysis of AI systems
-- Weather Agent: Provides current weather information for any city or location worldwide
-- Support Email Agent: Specialized in handling and formatting email-style support requests with professional email responses
+Available specialized agents:
+- QnA Agent: Customer support questions, product information, technical help, how-to questions
+- AI Ethics Agent: AI ethics, human-AI dependency, AI societal impact, AI governance, AI bias/fairness
+- Weather Agent: Weather conditions, forecasts, temperature, climate information for any location
+- Support Email Agent: Email-format support requests requiring professional email responses
 
-Decision criteria:
-- For email format support requests or formal support inquiries: Delegate to Support Email Agent
-- For general customer support questions: Delegate to QnA Agent
-- For AI ethics, human-AI dependency, or AI societal impact questions: Delegate to AI Ethics Agent
-- For weather information requests: Delegate to Weather Agent
-- For complex requests requiring coordination: Handle directly while consulting agents
-- Always ensure the user gets a complete and helpful response
+Delegation priority (always try these first):
+1. Email format or formal support requests → Support Email Agent
+2. Weather-related questions → Weather Agent  
+3. AI ethics/societal impact questions → AI Ethics Agent
+4. Customer support/technical questions → QnA Agent
 
-AI Ethics topics include:
-- Human dependence on AI systems
-- Ethical implications of AI technology
-- AI's impact on society, employment, education
-- AI governance, policy, and regulation
-- Philosophical questions about AI and humanity
-- Risk assessment of AI systems
-- AI bias, fairness, and accountability
+Handle directly when NO agent is suitable:
+- Casual greetings ("hello", "hi", "how are you")
+- Personal questions about yourself
+- General chit chat and conversation
+- Jokes, riddles, or entertainment
+- Simple math, basic facts not covered by agents
+- Philosophical questions (non-AI related)
+- Creative requests (stories, poems, etc.)
+- General life advice or opinions
 
-Weather topics include:
-- Current weather conditions for any location
-- Temperature, humidity, wind conditions
-- Weather forecasts and atmospheric conditions
-- Weather-related advice and recommendations
+When handling directly:
+- Be warm, friendly, and conversational
+- Show personality and engage naturally
+- Provide helpful and thoughtful responses
+- Ask follow-up questions to keep conversation flowing
+- Be honest about your capabilities and limitations
 
 When delegating:
-1. Clearly explain what you're doing
-2. Present the agent's response
-3. Add any additional context or follow-up suggestions if helpful
+- Briefly mention which agent you're consulting
+- Present the specialist's response clearly
+- Add follow-up suggestions if helpful
 
-Be professional, clear, and ensure every user interaction is valuable."""
+Always prioritize delegating to specialists for their domains, but be a great conversationalist for everything else!"""
         )
     
     async def _delegate_to_qna(self, question: str, thread: Optional[ChatHistory] = None) -> str:
@@ -240,8 +241,92 @@ Be professional, clear, and ensure every user interaction is valuable."""
             logger.error(f"❌ Support Email Agent delegation failed: {e}")
             raise
     
+    def _analyze_request_type(self, user_input: str) -> dict:
+        """Analyze the user's request to determine the best routing strategy.
+        
+        Args:
+            user_input: The user's input to analyze
+            
+        Returns:
+            dict: Analysis results with routing recommendations
+        """
+        user_lower = user_input.lower().strip()
+        
+        # Check for email format
+        is_email_format = self.support_email_agent.is_email_format(user_input)
+        
+        # Weather keywords
+        weather_keywords = [
+            "weather", "temperature", "rain", "snow", "sunny", "cloudy", "wind",
+            "humidity", "forecast", "climate", "precipitation", "storm", "sunshine",
+            "degrees", "celsius", "fahrenheit", "hot", "cold", "warm", "cool",
+            "weather in", "weather for", "how's the weather", "what's the weather",
+            "meteorology", "atmospheric", "barometric"
+        ]
+        
+        # AI Ethics keywords
+        ai_ethics_keywords = [
+            "ai ethics", "artificial intelligence ethics", "ai bias", "ai fairness",
+            "human ai dependency", "human dependence", "ai dependency", "ai dependence",
+            "ai impact", "ai society", "ai societal", "ethical ai", "ai governance",
+            "ai regulation", "ai policy", "ai philosophy", "ai consciousness",
+            "human ai relationship", "ai and humanity", "ai risk", "ai safety",
+            "algorithmic bias", "machine learning ethics", "ai accountability",
+            "automation ethics", "ai employment", "ai education", "ai healthcare ethics",
+            "algorithmic fairness", "ai transparency"
+        ]
+        
+        # Customer support keywords
+        support_keywords = [
+            "help", "support", "problem", "issue", "error", "bug", "troubleshoot",
+            "how do i", "how to", "can't", "won't", "doesn't work", "not working",
+            "login", "password", "account", "billing", "subscription", "cancel",
+            "refund", "technical", "feature", "tutorial", "guide", "instructions"
+        ]
+        
+        # Chit chat / casual conversation keywords
+        chitchat_keywords = [
+            "hello", "hi", "hey", "good morning", "good afternoon", "good evening",
+            "how are you", "what's up", "nice to meet", "thanks", "thank you",
+            "bye", "goodbye", "see you", "have a great", "who are you",
+            "what are you", "tell me about yourself", "joke", "funny", "story",
+            "what do you think", "opinion", "favorite", "like", "love", "hate"
+        ]
+        
+        # Simple math/facts keywords
+        simple_keywords = [
+            "what is", "calculate", "math", "add", "subtract", "multiply", "divide",
+            "convert", "translate", "define", "meaning", "capital of", "population",
+            "when was", "who is", "where is"
+        ]
+        
+        # Analyze matches
+        weather_score = sum(1 for keyword in weather_keywords if keyword in user_lower)
+        ai_ethics_score = sum(1 for keyword in ai_ethics_keywords if keyword in user_lower)
+        support_score = sum(1 for keyword in support_keywords if keyword in user_lower)
+        chitchat_score = sum(1 for keyword in chitchat_keywords if keyword in user_lower)
+        simple_score = sum(1 for keyword in simple_keywords if keyword in user_lower)
+        
+        # Additional analysis
+        has_question_words = any(word in user_lower for word in ["what", "how", "why", "when", "where", "who", "?"])
+        word_count = len(user_input.split())
+        is_greeting = any(greeting in user_lower for greeting in ["hello", "hi", "hey", "good morning", "good afternoon"])
+        
+        return {
+            "is_email_format": is_email_format,
+            "weather_score": weather_score,
+            "ai_ethics_score": ai_ethics_score,
+            "support_score": support_score,
+            "chitchat_score": chitchat_score,
+            "simple_score": simple_score,
+            "has_question_words": has_question_words,
+            "word_count": word_count,
+            "is_greeting": is_greeting,
+            "user_lower": user_lower
+        }
+
     async def handle_request(self, user_input: str, thread: Optional[ChatHistory] = None) -> str:
-        """Handle a user request, coordinating with other agents as needed.
+        """Handle a user request, always trying to delegate to appropriate agents first.
         
         Args:
             user_input: The user's input/request
@@ -260,78 +345,75 @@ Be professional, clear, and ensure every user interaction is valuable."""
             history_count = len([msg for msg in thread.messages])
             logger.info(f"📚 Using existing thread with {history_count} messages")
         
-        # Analyze the request type
-        logger.info("🔍 Analyzing request type...")
-        question_indicators = ["what", "how", "why", "when", "where", "who", "?"]
-        is_question = any(indicator in user_input.lower() for indicator in question_indicators)
-        word_count = len(user_input.split())
+        # Analyze the request
+        logger.info("🔍 Analyzing request for optimal routing...")
+        analysis = self._analyze_request_type(user_input)
         
-        # Check for AI ethics topics
-        ai_ethics_keywords = [
-            "ai ethics", "artificial intelligence ethics", "ai bias", "ai fairness",
-            "human ai dependency", "human dependence", "ai dependency", "ai dependence",
-            "ai impact", "ai society", "ai societal", "ethical ai", "ai governance",
-            "ai regulation", "ai policy", "ai philosophy", "ai consciousness",
-            "human ai relationship", "ai and humanity", "ai risk", "ai safety",
-            "algorithmic bias", "machine learning ethics", "ai accountability",
-            "automation ethics", "ai employment", "ai education", "ai healthcare ethics"
-        ]
-        
-        # Check for weather topics
-        weather_keywords = [
-            "weather", "temperature", "rain", "snow", "sunny", "cloudy", "wind",
-            "humidity", "forecast", "climate", "precipitation", "storm", "sunshine",
-            "degrees", "celsius", "fahrenheit", "hot", "cold", "warm", "cool",
-            "weather in", "weather for", "how's the weather", "what's the weather"
-        ]
-        
-        is_ai_ethics_question = any(keyword in user_input.lower() for keyword in ai_ethics_keywords)
-        is_weather_question = any(keyword in user_input.lower() for keyword in weather_keywords)
-        is_email_format = self.support_email_agent.is_email_format(user_input)
-        
-        logger.info(f"📊 Analysis: is_question={is_question}, word_count={word_count}, is_ai_ethics={is_ai_ethics_question}, is_weather={is_weather_question}, is_email_format={is_email_format}")
+        logger.info(f"📊 Analysis: email={analysis['is_email_format']}, weather={analysis['weather_score']}, "
+                   f"ai_ethics={analysis['ai_ethics_score']}, support={analysis['support_score']}, "
+                   f"chitchat={analysis['chitchat_score']}, simple={analysis['simple_score']}")
         
         try:
-            if is_email_format:
+            # Priority 1: Email format support requests
+            if analysis["is_email_format"]:
                 logger.info("🎯 DECISION: Delegating to Support Email Agent (email format detected)")
-                email_response = await self._delegate_to_support_email(user_input, thread)
-                
+                response = await self._delegate_to_support_email(user_input, thread)
                 response_time = time.time() - start_time
                 logger.info(f"✅ ORCHESTRATOR: Completed Support Email delegation in {response_time:.2f}s")
-                return email_response
-                
-            elif is_weather_question:
-                logger.info("🎯 DECISION: Delegating to Weather Agent (weather-related question)")
-                weather_response = await self._delegate_to_weather(user_input, thread)
-                final_response = f"Here's the current weather information you requested:\n\n{weather_response}"
-                
+                return response
+            
+            # Priority 2: Weather requests (strong indicator)
+            elif analysis["weather_score"] >= 2:
+                logger.info("🎯 DECISION: Delegating to Weather Agent (weather keywords detected)")
+                response = await self._delegate_to_weather(user_input, thread)
                 response_time = time.time() - start_time
                 logger.info(f"✅ ORCHESTRATOR: Completed Weather delegation in {response_time:.2f}s")
-                return final_response
-                
-            elif is_ai_ethics_question:
-                logger.info("🎯 DECISION: Delegating to AI Ethics Agent (ethics-related question)")
-                ethics_response = await self._delegate_to_ai_ethics(user_input, thread)
-                final_response = f"Here's an expert analysis on the AI ethics topic you asked about:\n\n{ethics_response}"
-                
+                return response
+            
+            # Priority 3: AI Ethics requests (strong indicator)
+            elif analysis["ai_ethics_score"] >= 2:
+                logger.info("🎯 DECISION: Delegating to AI Ethics Agent (AI ethics keywords detected)")
+                response = await self._delegate_to_ai_ethics(user_input, thread)
                 response_time = time.time() - start_time
                 logger.info(f"✅ ORCHESTRATOR: Completed AI Ethics delegation in {response_time:.2f}s")
-                return final_response
-                
-            elif is_question and word_count < 20:  # Simple question
-                logger.info("🎯 DECISION: Delegating to QnA Agent (simple question)")
-                qna_response = await self._delegate_to_qna(user_input, thread)
-                final_response = f"Based on your question, here's what I found:\n\n{qna_response}"
-                
+                return response
+            
+            # Priority 4: Customer support requests
+            elif analysis["support_score"] >= 2 or (analysis["support_score"] >= 1 and analysis["has_question_words"]):
+                logger.info("🎯 DECISION: Delegating to QnA Agent (support keywords detected)")
+                response = await self._delegate_to_qna(user_input, thread)
                 response_time = time.time() - start_time
                 logger.info(f"✅ ORCHESTRATOR: Completed QnA delegation in {response_time:.2f}s")
-                return final_response
+                return response
+            
+            # Priority 5: Single keyword matches (weaker signals but still worth trying)
+            elif analysis["weather_score"] >= 1:
+                logger.info("🎯 DECISION: Delegating to Weather Agent (weather keyword detected)")
+                response = await self._delegate_to_weather(user_input, thread)
+                response_time = time.time() - start_time
+                logger.info(f"✅ ORCHESTRATOR: Completed Weather delegation in {response_time:.2f}s")
+                return response
                 
+            elif analysis["ai_ethics_score"] >= 1:
+                logger.info("🎯 DECISION: Delegating to AI Ethics Agent (AI ethics keyword detected)")
+                response = await self._delegate_to_ai_ethics(user_input, thread)
+                response_time = time.time() - start_time
+                logger.info(f"✅ ORCHESTRATOR: Completed AI Ethics delegation in {response_time:.2f}s")
+                return response
+                
+            elif analysis["support_score"] >= 1 and analysis["has_question_words"]:
+                logger.info("🎯 DECISION: Delegating to QnA Agent (support-related question)")
+                response = await self._delegate_to_qna(user_input, thread)
+                response_time = time.time() - start_time
+                logger.info(f"✅ ORCHESTRATOR: Completed QnA delegation in {response_time:.2f}s")
+                return response
+            
+            # Fallback: Handle directly (chit chat, general conversation, simple questions)
             else:
-                logger.info("🎯 DECISION: Handling directly with Orchestrator Agent (complex request)")
+                logger.info("🎯 DECISION: Handling directly - chit chat, general conversation, or non-agent domain")
                 thread.add_user_message(user_input)
                 
-                logger.info("🤖 Invoking Orchestrator Agent...")
+                logger.info("🤖 Invoking Orchestrator Agent for direct handling...")
                 invoke_start = time.time()
                 responses = []
                 async for response in self.agent.invoke(thread):
@@ -343,7 +425,7 @@ Be professional, clear, and ensure every user interaction is valuable."""
                 
                 invoke_time = time.time() - invoke_start
                 total_time = time.time() - start_time
-                logger.info(f"✅ ORCHESTRATOR: Agent invocation completed in {invoke_time:.2f}s")
+                logger.info(f"✅ ORCHESTRATOR: Direct handling completed in {invoke_time:.2f}s")
                 logger.info(f"✅ ORCHESTRATOR: Total request handled in {total_time:.2f}s")
                 logger.info(f"📤 Final response: '{result[:100]}{'...' if len(result) > 100 else ''}'")
                 
@@ -353,3 +435,68 @@ Be professional, clear, and ensure every user interaction is valuable."""
             error_time = time.time() - start_time
             logger.error(f"❌ ORCHESTRATOR: Request failed after {error_time:.2f}s: {e}")
             raise
+    
+    async def invoke(self, user_input: str, thread: Optional[ChatHistory] = None) -> str:
+        """Public interface to invoke the orchestrator agent.
+        
+        Args:
+            user_input: The user's input/request
+            thread: Optional chat thread for conversation history
+            
+        Returns:
+            str: The orchestrated response
+        """
+        return await self.handle_request(user_input, thread)
+    
+    def get_available_agents(self) -> list:
+        """Get list of available agent capabilities.
+        
+        Returns:
+            list: List of agent descriptions
+        """
+        return [
+            {
+                "name": "Support Email Agent",
+                "description": "Handles email-format support requests with professional email responses",
+                "domains": ["email support", "formal inquiries", "customer service emails"]
+            },
+            {
+                "name": "Weather Agent", 
+                "description": "Provides current weather information for any location worldwide",
+                "domains": ["weather", "temperature", "forecasts", "climate conditions"]
+            },
+            {
+                "name": "AI Ethics Agent",
+                "description": "Specialized in AI ethics, human-AI dependency, and ethical analysis",
+                "domains": ["AI ethics", "algorithmic bias", "AI governance", "human-AI relationships"]
+            },
+            {
+                "name": "QnA Agent",
+                "description": "Handles general customer support questions and informational responses", 
+                "domains": ["customer support", "technical help", "product information", "how-to guides"]
+            },
+            {
+                "name": "Orchestrator (Direct)",
+                "description": "Handles chit chat, general conversation, and questions outside specialist domains",
+                "domains": ["greetings", "casual conversation", "general knowledge", "creative requests"]
+            }
+        ]
+    
+    def get_routing_statistics(self) -> dict:
+        """Get statistics about agent routing decisions (placeholder for future implementation).
+        
+        Returns:
+            dict: Routing statistics
+        """
+        # This could be expanded to track routing decisions over time
+        return {
+            "total_requests": 0,
+            "agent_usage": {
+                "support_email": 0,
+                "weather": 0, 
+                "ai_ethics": 0,
+                "qna": 0,
+                "direct": 0
+            },
+            "success_rate": 0.0
+        }
