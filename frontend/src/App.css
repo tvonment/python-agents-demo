@@ -14,13 +14,6 @@ body {
     min-height: 100vh;
 }
 
-ul {
-    list-style: none;
-}
-
-br {
-    display: none;
-}
 
 .App {
     display: flex;
@@ -256,6 +249,38 @@ br {
 .message-content {
     line-height: 1.6;
     white-space: pre-wrap;
+}
+
+/* Markdown formatting for message content */
+.message-content ul {
+    white-space: pre-wrap;
+    list-style: disc;
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+}
+
+.message-content ol {
+    white-space: pre-wrap;
+    list-style: decimal;
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+    padding-left: 0.5rem;
+}
+
+.message-content li {
+    margin-bottom: 0.1rem;
+}
+
+.message-content ul ul,
+.message-content ol ol,
+.message-content ul ol,
+.message-content ol ul {
+    margin-top: 0.5rem;
+}
+
+.message-content br {
+    display: none;
 }
 
 .loading {
