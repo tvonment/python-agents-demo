@@ -83,12 +83,12 @@ function App() {
                                 <div className="agent-card">
                                     <span className="agent-icon">🎯</span>
                                     <strong>Orchestrator</strong>
-                                    <p>Intelligent routing and casual conversation</p>
+                                    <p>Intelligent routing with Magentic multi-agent coordination for complex tasks</p>
                                 </div>
                                 <div className="agent-card">
                                     <span className="agent-icon">📧</span>
                                     <strong>Support Email Agent</strong>
-                                    <p>Professional email responses for customer support</p>
+                                    <p>Professional email formatting (final step only - prevents orchestration loops)</p>
                                 </div>
                                 <div className="agent-card">
                                     <span className="agent-icon">🌤️</span>
@@ -123,6 +123,9 @@ function App() {
                                     </button>
                                     <button className="prompt-btn" onClick={() => setInputMessage("What's the weather like in Stockholm?")}>
                                         🌤️ Weather in Stockholm
+                                    </button>
+                                    <button className="prompt-btn" onClick={() => setInputMessage("Hi, how are you? What is the best ethical perspective when it comes to Human/AI dependency? also whats the weather like in Bern?")}>
+                                        🚀 Magentic Flow
                                     </button>
                                 </div>
                             </div>
