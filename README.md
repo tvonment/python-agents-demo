@@ -11,16 +11,17 @@ A sophisticated multi-agent system built with **Microsoft Semantic Kernel** and 
 ## 🌟 Features
 
 ### 🎯 **Intelligent Agent Orchestration**
-- **Orchestrator Agent**: Central coordinator that intelligently routes requests to specialized agents
-- **Dynamic Agent Selection**: Automatically determines the best agent for each user request
-- **Conversation Continuity**: Maintains context across multi-turn conversations
+- **Magentic Multi-Agent Coordination**: Advanced orchestration for complex multi-step tasks
+- **Smart Routing**: Automatically determines the best agent(s) for each request
+- **Multi-Topic Support**: Handles requests requiring multiple specialized agents
+- **Loop Prevention**: Prevents infinite loops in email formatting workflows
 
 ### 🤖 **Specialized AI Agents**
 
 | Agent | Purpose | Capabilities |
 |-------|---------|-------------|
-| 🎯 **Orchestrator** | Central coordination | Intelligent routing, casual conversation, agent selection |
-| 📧 **Support Email** | Customer support | Professional email responses, ticket management |
+| 🎯 **Orchestrator** | Central coordination | Magentic orchestration, intelligent routing, multi-agent workflows |
+| 📧 **Support Email** | Email formatting | Professional email responses (final step only - prevents loops) |
 | 🌤️ **Weather** | Weather information | Real-time weather data for any location worldwide |
 | 🧠 **AI Ethics** | Ethics & philosophy | AI ethics discussions, bias analysis, human-AI relationships |
 | 💬 **QnA** | General inquiries | Customer support, FAQ responses, general information |
@@ -33,12 +34,14 @@ A sophisticated multi-agent system built with **Microsoft Semantic Kernel** and 
 - **Conversation Management**: Clear chat history, thread continuity
 
 ### 🔧 **Technical Features**
-- **Async Processing**: Non-blocking agent operations
+- **Magentic Orchestration**: Advanced multi-agent coordination for complex tasks
+- **Async Processing**: Non-blocking agent operations with parallel execution
+- **Loop Prevention**: Intelligent email formatting to prevent orchestration loops
+- **Multi-Agent Synthesis**: Seamless integration of responses from multiple agents
 - **Document Intelligence**: PDF processing with Azure Document Intelligence
 - **Vector Search**: Semantic search capabilities for knowledge retrieval
 - **Database Integration**: SQLite databases for document storage and retrieval
 - **Error Handling**: Comprehensive error management and logging
-- **Environment Configuration**: Secure API key management
 
 ## 🚀 Quick Start
 
@@ -170,10 +173,16 @@ print(response.json())
 🤖 Assistant: "This is an excellent question about AI ethics in healthcare. Let me analyze this from multiple perspectives..."
 ```
 
-### 4. **Customer Support Email**
+### 4. **Multi-Topic Request**
 ```
-👤 User: "From: john@example.com\nSubject: Account Access Issue\n\nI can't log into my account..."
-🤖 Assistant: "I'll help you craft a professional response to this customer support inquiry..."
+👤 User: "What are the ethical implications of AI dependency and what's the weather in Stockholm?"
+🤖 Assistant: "I'll analyze both the AI ethics aspects and get the current weather for you..."
+```
+
+### 5. **Complex Multi-Agent Analysis**
+```
+👤 User: "Please analyze AI governance across healthcare and automotive sectors, and examine how weather patterns might impact AI deployment strategies."
+🤖 Assistant: "This is a comprehensive request requiring analysis from multiple perspectives..."
 ```
 
 ## 🛠️ Customization
