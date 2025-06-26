@@ -10,7 +10,7 @@ from semantic_kernel import Kernel
 from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.contents import ChatHistory
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
-from .customer_support_db import CustomerSupportDB, SupportDocument
+from support.customer_support_db import CustomerSupportDB, SupportDocument
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
