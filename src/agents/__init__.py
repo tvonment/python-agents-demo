@@ -1,15 +1,8 @@
 """
-Agents module for the multi-agent solution.
+Agents package for the multi-agent system.
 """
 
-from .base_agent import BaseAgent
-from .research_agent import ResearchAgent
-from .writing_agent import WritingAgent
-from .coordinator_agent import CoordinatorAgent
+from .qna_agent import QnAAgent
+from .orchestrator_agent import OrchestratorAgent
 
-__all__ = [
-    "BaseAgent",
-    "ResearchAgent", 
-    "WritingAgent",
-    "CoordinatorAgent"
-]
+__all__ = ["QnAAgent", "OrchestratorAgent"]
