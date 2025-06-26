@@ -34,7 +34,7 @@ class SupportDocument:
 class CustomerSupportDB:
     """Customer Support Database Manager with vector search capabilities."""
     
-    def __init__(self, db_path: str = "data/customer_support.db"):
+    def __init__(self, db_path: str = "../data/customer_support.db"):
         """Initialize the customer support database manager.
         
         Args:

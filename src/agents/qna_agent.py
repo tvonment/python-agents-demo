@@ -68,7 +68,6 @@ class QnAAgent:
             raise ValueError("AZURE_OPENAI_API_KEY environment variable is required")
         
         try:
-            logger.info(f"� QnA using API key authentication for {deployment_name}")
             chat_completion = AzureChatCompletion(
                 endpoint=endpoint,
                 deployment_name=deployment_name,

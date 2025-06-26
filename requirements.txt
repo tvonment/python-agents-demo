@@ -5,6 +5,9 @@ semantic-kernel[azure]>=1.32.1
 numpy>=1.24.0
 openai>=1.0.0
 
+# Azure Document Intelligence
+azure-ai-documentintelligence>=1.0.0
+
 # Utilities
 python-dotenv>=1.0.0
 

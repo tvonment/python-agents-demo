@@ -73,6 +73,11 @@ async def lifespan(app: FastAPI):
     
     try:
         orchestrator = OrchestratorAgent()
+        
+        # Initialize async components
+        logger.info("🔄 Initializing async components...")
+        await orchestrator.initialize_async_components()
+        
         startup_completed = time.time() - startup_time
         logger.info(f"✅ Multi-Agent System initialized successfully in {startup_completed:.2f}s")
         logger.info(f"🌐 API will be available on the configured host and port")
@@ -92,7 +97,7 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app
 app = FastAPI(
     title="Multi-Agent System",
-    description="A Semantic Kernel-based multi-agent system with Orchestrator and QnA agents",
+    description="A Semantic Kernel-based multi-agent system with Orchestrator, QnA, and AI Ethics agents",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -139,14 +144,52 @@ async def root():
 async def health_check():
     """Health check endpoint."""
     logger.info("🏥 Health check requested")
+    
+    # Check AI Ethics database status
+    ai_ethics_status = None
+    if orchestrator and hasattr(orchestrator, 'ai_ethics_agent'):
+        try:
+            ai_ethics_summary = orchestrator.ai_ethics_agent.get_document_summary()
+            ai_ethics_status = {
+                "status": "ready",
+                "documents": ai_ethics_summary.get("total_documents", 0),
+                "files": ai_ethics_summary.get("total_files", 0)
+            }
+        except Exception as e:
+            ai_ethics_status = {"status": "error", "error": str(e)}
+    
     status = {
         "status": "healthy", 
         "agents": {
-            "orchestrator": orchestrator is not None
+            "orchestrator": orchestrator is not None,
+            "ai_ethics": ai_ethics_status
         }
     }
     logger.info(f"📊 Health status: {status}")
     return status
+
+
+@app.get("/ai-ethics/documents")
+async def get_ai_ethics_documents():
+    """Get information about AI ethics documents in the database."""
+    logger.info("📚 AI Ethics documents info requested")
+    
+    if not orchestrator:
+        logger.error("❌ Orchestrator agent not initialized")
+        raise HTTPException(status_code=500, detail="Orchestrator agent not initialized")
+    
+    if not hasattr(orchestrator, 'ai_ethics_agent'):
+        logger.error("❌ AI Ethics agent not available")
+        raise HTTPException(status_code=500, detail="AI Ethics agent not available")
+    
+    try:
+        summary = orchestrator.ai_ethics_agent.get_document_summary()
+        logger.info(f"📊 AI Ethics documents summary: {summary}")
+        return summary
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting AI Ethics documents info: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting documents info: {str(e)}")
 
 
 @app.post("/chat", response_model=ChatResponse)

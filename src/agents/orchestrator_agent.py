@@ -10,6 +10,7 @@ from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.contents import ChatHistory
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
 from .qna_agent import QnAAgent
+from .ai_ethics_agent import AIEthicsAgent
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
@@ -35,11 +36,24 @@ class OrchestratorAgent:
             self.qna_agent = QnAAgent()
             logger.info("✅ QnA Agent initialized")
             
+            self.ai_ethics_agent = AIEthicsAgent()
+            logger.info("✅ AI Ethics Agent initialized")
+            
             init_time = time.time() - start_time
             logger.info(f"🎉 Orchestrator Agent fully initialized in {init_time:.2f}s")
             
         except Exception as e:
             logger.error(f"❌ Failed to initialize Orchestrator Agent: {e}")
+            raise
+    
+    async def initialize_async_components(self):
+        """Initialize async components after the main initialization."""
+        logger.info("🔄 Initializing async components...")
+        try:
+            await self.ai_ethics_agent.initialize_documents()
+            logger.info("✅ All async components initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize async components: {e}")
             raise
         
     def _create_kernel(self) -> Kernel:
@@ -67,7 +81,6 @@ class OrchestratorAgent:
             raise ValueError("AZURE_OPENAI_API_KEY environment variable is required")
         
         try:
-            logger.info(f"� Using API key authentication for {deployment_name}")
             chat_completion = AzureChatCompletion(
                 endpoint=endpoint,
                 deployment_name=deployment_name,
@@ -95,12 +108,23 @@ Your responsibilities:
 4. Provide clear, comprehensive answers to users
 
 Available agents:
-- QnA Agent: Handles general questions and provides informational responses
+- QnA Agent: Handles general customer support questions and provides informational responses
+- AI Ethics Agent: Specialized in AI ethics topics, human-AI dependency, and ethical analysis of AI systems
 
 Decision criteria:
-- For simple questions and general inquiries: Delegate to QnA Agent
+- For general customer support questions: Delegate to QnA Agent
+- For AI ethics, human-AI dependency, or AI societal impact questions: Delegate to AI Ethics Agent
 - For complex requests requiring coordination: Handle directly while consulting agents
 - Always ensure the user gets a complete and helpful response
+
+AI Ethics topics include:
+- Human dependence on AI systems
+- Ethical implications of AI technology
+- AI's impact on society, employment, education
+- AI governance, policy, and regulation
+- Philosophical questions about AI and humanity
+- Risk assessment of AI systems
+- AI bias, fairness, and accountability
 
 When delegating:
 1. Clearly explain what you're doing
@@ -132,6 +156,28 @@ Be professional, clear, and ensure every user interaction is valuable."""
             logger.error(f"❌ QnA Agent delegation failed: {e}")
             raise
     
+    async def _delegate_to_ai_ethics(self, question: str, thread: Optional[ChatHistory] = None) -> str:
+        """Delegate a question to the AI Ethics agent and return the response.
+        
+        Args:
+            question: The question to ask the AI Ethics agent
+            thread: Optional thread for conversation context
+            
+        Returns:
+            The AI Ethics agent's response as a string
+        """
+        logger.info(f"🔄 Delegating to AI Ethics Agent: '{question[:100]}{'...' if len(question) > 100 else ''}'")
+        start_time = time.time()
+        
+        try:
+            response = await self.ai_ethics_agent.answer_question(question, thread)
+            response_time = time.time() - start_time
+            logger.info(f"✅ AI Ethics Agent responded in {response_time:.2f}s: '{response[:100]}{'...' if len(response) > 100 else ''}'")
+            return response
+        except Exception as e:
+            logger.error(f"❌ AI Ethics Agent delegation failed: {e}")
+            raise
+    
     async def handle_request(self, user_input: str, thread: Optional[ChatHistory] = None) -> str:
         """Handle a user request, coordinating with other agents as needed.
         
@@ -158,16 +204,38 @@ Be professional, clear, and ensure every user interaction is valuable."""
         is_question = any(indicator in user_input.lower() for indicator in question_indicators)
         word_count = len(user_input.split())
         
-        logger.info(f"📊 Analysis: is_question={is_question}, word_count={word_count}")
+        # Check for AI ethics topics
+        ai_ethics_keywords = [
+            "ai ethics", "artificial intelligence ethics", "ai bias", "ai fairness",
+            "human ai dependency", "human dependence", "ai dependency", "ai dependence",
+            "ai impact", "ai society", "ai societal", "ethical ai", "ai governance",
+            "ai regulation", "ai policy", "ai philosophy", "ai consciousness",
+            "human ai relationship", "ai and humanity", "ai risk", "ai safety",
+            "algorithmic bias", "machine learning ethics", "ai accountability",
+            "automation ethics", "ai employment", "ai education", "ai healthcare ethics"
+        ]
+        
+        is_ai_ethics_question = any(keyword in user_input.lower() for keyword in ai_ethics_keywords)
+        
+        logger.info(f"📊 Analysis: is_question={is_question}, word_count={word_count}, is_ai_ethics={is_ai_ethics_question}")
         
         try:
-            if is_question and word_count < 20:  # Simple question
+            if is_ai_ethics_question:
+                logger.info("🎯 DECISION: Delegating to AI Ethics Agent (ethics-related question)")
+                ethics_response = await self._delegate_to_ai_ethics(user_input, thread)
+                final_response = f"Here's an expert analysis on the AI ethics topic you asked about:\n\n{ethics_response}"
+                
+                response_time = time.time() - start_time
+                logger.info(f"✅ ORCHESTRATOR: Completed AI Ethics delegation in {response_time:.2f}s")
+                return final_response
+                
+            elif is_question and word_count < 20:  # Simple question
                 logger.info("🎯 DECISION: Delegating to QnA Agent (simple question)")
                 qna_response = await self._delegate_to_qna(user_input, thread)
                 final_response = f"Based on your question, here's what I found:\n\n{qna_response}"
                 
                 response_time = time.time() - start_time
-                logger.info(f"✅ ORCHESTRATOR: Completed delegation in {response_time:.2f}s")
+                logger.info(f"✅ ORCHESTRATOR: Completed QnA delegation in {response_time:.2f}s")
                 return final_response
                 
             else:
