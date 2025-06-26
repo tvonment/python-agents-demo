@@ -76,13 +76,55 @@ function App() {
                 <div className="messages-container">
                     {messages.length === 0 && (
                         <div className="welcome-message">
-                            <h3>👋 Welcome to the Multi-Agent System!</h3>
-                            <p>This system uses:</p>
-                            <ul>
-                                <li><strong>Orchestrator Agent:</strong> Coordinates and manages requests</li>
-                                <li><strong>QnA Agent:</strong> Answers questions and provides information</li>
-                            </ul>
-                            <p>Ask me anything to get started!</p>
+                            <h3>🤖 Welcome to the Multi-Agent System!</h3>
+                            <p>This intelligent system coordinates multiple specialized AI agents to provide comprehensive assistance:</p>
+                            <div className="agents-grid">
+                                <div className="agent-card">
+                                    <span className="agent-icon">📧</span>
+                                    <strong>Support Email Agent</strong>
+                                    <p>Professional email responses for customer support</p>
+                                </div>
+                                <div className="agent-card">
+                                    <span className="agent-icon">🌤️</span>
+                                    <strong>Weather Agent</strong>
+                                    <p>Real-time weather information for any location</p>
+                                </div>
+                                <div className="agent-card">
+                                    <span className="agent-icon">🧠</span>
+                                    <strong>AI Ethics Agent</strong>
+                                    <p>AI ethics, bias, and human-AI relationships</p>
+                                </div>
+                                <div className="agent-card">
+                                    <span className="agent-icon">💬</span>
+                                    <strong>QnA Agent</strong>
+                                    <p>Customer support and general information</p>
+                                </div>
+                                <div className="agent-card">
+                                    <span className="agent-icon">🎯</span>
+                                    <strong>Orchestrator</strong>
+                                    <p>Intelligent routing and casual conversation</p>
+                                </div>
+                            </div>
+                            <div className="prompt-library">
+                                <h4>🚀 Try these example prompts:</h4>
+                                <div className="prompt-buttons">
+                                    <button className="prompt-btn" onClick={() => setInputMessage("Hello! How are you doing today?")}>
+                                        👋 Casual Chat
+                                    </button>
+                                    <button className="prompt-btn" onClick={() => setInputMessage("How do I reset my password?")}>
+                                        💬 Password Reset Help
+                                    </button>
+                                    <button className="prompt-btn" onClick={() => setInputMessage("From: john@company.com\nTo: support@example.com\nSubject: Billing Issue\n\nHi, I'm having trouble with my recent invoice. Can you help me understand the charges?")}>
+                                        📧 Support Email
+                                    </button>
+                                    <button className="prompt-btn" onClick={() => setInputMessage("What are the ethical implications of AI dependency in healthcare?")}>
+                                        🧠 AI Ethics in Healthcare
+                                    </button>
+                                    <button className="prompt-btn" onClick={() => setInputMessage("What's the weather like in Stockholm?")}>
+                                        🌤️ Weather in Stockholm
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -118,13 +160,19 @@ function App() {
 
                 <form onSubmit={sendMessage} className="input-form">
                     <div className="input-container">
-                        <input
-                            type="text"
+                        <textarea
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
-                            placeholder="Type your message here..."
+                            placeholder="Type your message here... You can write longer messages, ask complex questions, or try the example prompts above!"
                             disabled={isLoading}
                             className="message-input"
+                            rows="3"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    sendMessage(e);
+                                }
+                            }}
                         />
                         <button
                             type="submit"
