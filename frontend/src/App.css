@@ -14,6 +14,14 @@ body {
     min-height: 100vh;
 }
 
+ul {
+    list-style: none;
+}
+
+br {
+    display: none;
+}
+
 .App {
     display: flex;
     flex-direction: column;

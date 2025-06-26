@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import axios from 'axios';
 import './App.css';
 
@@ -80,6 +81,11 @@ function App() {
                             <p>This intelligent system coordinates multiple specialized AI agents to provide comprehensive assistance:</p>
                             <div className="agents-grid">
                                 <div className="agent-card">
+                                    <span className="agent-icon">🎯</span>
+                                    <strong>Orchestrator</strong>
+                                    <p>Intelligent routing and casual conversation</p>
+                                </div>
+                                <div className="agent-card">
                                     <span className="agent-icon">📧</span>
                                     <strong>Support Email Agent</strong>
                                     <p>Professional email responses for customer support</p>
@@ -99,11 +105,6 @@ function App() {
                                     <strong>QnA Agent</strong>
                                     <p>Customer support and general information</p>
                                 </div>
-                                <div className="agent-card">
-                                    <span className="agent-icon">🎯</span>
-                                    <strong>Orchestrator</strong>
-                                    <p>Intelligent routing and casual conversation</p>
-                                </div>
                             </div>
                             <div className="prompt-library">
                                 <h4>🚀 Try these example prompts:</h4>
@@ -114,7 +115,7 @@ function App() {
                                     <button className="prompt-btn" onClick={() => setInputMessage("How do I reset my password?")}>
                                         💬 Password Reset Help
                                     </button>
-                                    <button className="prompt-btn" onClick={() => setInputMessage("From: john@company.com\nTo: support@example.com\nSubject: Billing Issue\n\nHi, I'm having trouble with my recent invoice. Can you help me understand the charges?")}>
+                                    <button className="prompt-btn" onClick={() => setInputMessage("From: john.smith@example.com\nTo: support@hakamo.io\nSubject: Account Access Issue\n\nHello Support Team,\n\nI'm having trouble accessing my account. I've tried resetting my password multiple times but I'm still unable to log in. Could you please help me resolve this issue?\n\nThank you,\nJohn")}>
                                         📧 Support Email
                                     </button>
                                     <button className="prompt-btn" onClick={() => setInputMessage("What are the ethical implications of AI dependency in healthcare?")}>
@@ -136,7 +137,14 @@ function App() {
                                 {message.type === 'error' && '⚠️ Error'}
                             </div>
                             <div className="message-content">
-                                {message.content}
+                                {message.type === 'agent' ? (
+                                    <ReactMarkdown
+                                        components={{}}>
+                                        {message.content}
+                                    </ReactMarkdown>
+                                ) : (
+                                    message.content
+                                )}
                             </div>
                         </div>
                     ))}
