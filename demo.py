@@ -41,7 +41,24 @@ async def demo_orchestrator():
             "Explain the benefits of cloud computing",
             "What's the weather in London?",
             "How's the weather in New York City right now?",
-            "Tell me about AI ethics and human dependency on technology"
+            "Tell me about AI ethics and human dependency on technology",
+            """Subject: Account Access Issue
+
+Dear Support Team,
+
+I'm having trouble accessing my account. When I try to log in, I get an error message saying "Invalid credentials" even though I'm using the correct password.
+
+Could you please help me resolve this issue?
+
+Best regards,
+Alex Johnson
+alex.johnson@email.com""",
+            """Hi Support,
+
+I need help with my billing. My payment was declined last month and I can't figure out why. Can someone help me?
+
+Thanks!
+Sarah"""
         ]
         
         for i, question in enumerate(test_questions, 1):

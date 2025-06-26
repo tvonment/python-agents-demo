@@ -12,6 +12,7 @@ from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
 from .qna_agent import QnAAgent
 from .ai_ethics_agent import AIEthicsAgent
 from .weather_agent import WeatherAgent
+from .support_email_agent import SupportEmailAgent
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
@@ -42,6 +43,9 @@ class OrchestratorAgent:
             
             self.weather_agent = WeatherAgent()
             logger.info("✅ Weather Agent initialized")
+            
+            self.support_email_agent = SupportEmailAgent()
+            logger.info("✅ Support Email Agent initialized")
             
             init_time = time.time() - start_time
             logger.info(f"🎉 Orchestrator Agent fully initialized in {init_time:.2f}s")
@@ -115,8 +119,10 @@ Available agents:
 - QnA Agent: Handles general customer support questions and provides informational responses
 - AI Ethics Agent: Specialized in AI ethics topics, human-AI dependency, and ethical analysis of AI systems
 - Weather Agent: Provides current weather information for any city or location worldwide
+- Support Email Agent: Specialized in handling and formatting email-style support requests with professional email responses
 
 Decision criteria:
+- For email format support requests or formal support inquiries: Delegate to Support Email Agent
 - For general customer support questions: Delegate to QnA Agent
 - For AI ethics, human-AI dependency, or AI societal impact questions: Delegate to AI Ethics Agent
 - For weather information requests: Delegate to Weather Agent
@@ -212,6 +218,28 @@ Be professional, clear, and ensure every user interaction is valuable."""
             logger.error(f"❌ Weather Agent delegation failed: {e}")
             raise
     
+    async def _delegate_to_support_email(self, message: str, thread: Optional[ChatHistory] = None) -> str:
+        """Delegate a message to the Support Email agent and return the response.
+        
+        Args:
+            message: The message to send to the Support Email agent
+            thread: Optional thread for conversation context
+            
+        Returns:
+            The Support Email agent's response as a string
+        """
+        logger.info(f"🔄 Delegating to Support Email Agent: '{message[:100]}{'...' if len(message) > 100 else ''}'")
+        start_time = time.time()
+        
+        try:
+            response = await self.support_email_agent.invoke(message, thread)
+            response_time = time.time() - start_time
+            logger.info(f"✅ Support Email Agent responded in {response_time:.2f}s: '{response[:100]}{'...' if len(response) > 100 else ''}'")
+            return response
+        except Exception as e:
+            logger.error(f"❌ Support Email Agent delegation failed: {e}")
+            raise
+    
     async def handle_request(self, user_input: str, thread: Optional[ChatHistory] = None) -> str:
         """Handle a user request, coordinating with other agents as needed.
         
@@ -259,11 +287,20 @@ Be professional, clear, and ensure every user interaction is valuable."""
         
         is_ai_ethics_question = any(keyword in user_input.lower() for keyword in ai_ethics_keywords)
         is_weather_question = any(keyword in user_input.lower() for keyword in weather_keywords)
+        is_email_format = self.support_email_agent.is_email_format(user_input)
         
-        logger.info(f"📊 Analysis: is_question={is_question}, word_count={word_count}, is_ai_ethics={is_ai_ethics_question}, is_weather={is_weather_question}")
+        logger.info(f"📊 Analysis: is_question={is_question}, word_count={word_count}, is_ai_ethics={is_ai_ethics_question}, is_weather={is_weather_question}, is_email_format={is_email_format}")
         
         try:
-            if is_weather_question:
+            if is_email_format:
+                logger.info("🎯 DECISION: Delegating to Support Email Agent (email format detected)")
+                email_response = await self._delegate_to_support_email(user_input, thread)
+                
+                response_time = time.time() - start_time
+                logger.info(f"✅ ORCHESTRATOR: Completed Support Email delegation in {response_time:.2f}s")
+                return email_response
+                
+            elif is_weather_question:
                 logger.info("🎯 DECISION: Delegating to Weather Agent (weather-related question)")
                 weather_response = await self._delegate_to_weather(user_input, thread)
                 final_response = f"Here's the current weather information you requested:\n\n{weather_response}"
