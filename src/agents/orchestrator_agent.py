@@ -11,6 +11,7 @@ from semantic_kernel.contents import ChatHistory
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
 from .qna_agent import QnAAgent
 from .ai_ethics_agent import AIEthicsAgent
+from .weather_agent import WeatherAgent
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
@@ -38,6 +39,9 @@ class OrchestratorAgent:
             
             self.ai_ethics_agent = AIEthicsAgent()
             logger.info("✅ AI Ethics Agent initialized")
+            
+            self.weather_agent = WeatherAgent()
+            logger.info("✅ Weather Agent initialized")
             
             init_time = time.time() - start_time
             logger.info(f"🎉 Orchestrator Agent fully initialized in {init_time:.2f}s")
@@ -110,10 +114,12 @@ Your responsibilities:
 Available agents:
 - QnA Agent: Handles general customer support questions and provides informational responses
 - AI Ethics Agent: Specialized in AI ethics topics, human-AI dependency, and ethical analysis of AI systems
+- Weather Agent: Provides current weather information for any city or location worldwide
 
 Decision criteria:
 - For general customer support questions: Delegate to QnA Agent
 - For AI ethics, human-AI dependency, or AI societal impact questions: Delegate to AI Ethics Agent
+- For weather information requests: Delegate to Weather Agent
 - For complex requests requiring coordination: Handle directly while consulting agents
 - Always ensure the user gets a complete and helpful response
 
@@ -125,6 +131,12 @@ AI Ethics topics include:
 - Philosophical questions about AI and humanity
 - Risk assessment of AI systems
 - AI bias, fairness, and accountability
+
+Weather topics include:
+- Current weather conditions for any location
+- Temperature, humidity, wind conditions
+- Weather forecasts and atmospheric conditions
+- Weather-related advice and recommendations
 
 When delegating:
 1. Clearly explain what you're doing
@@ -178,6 +190,28 @@ Be professional, clear, and ensure every user interaction is valuable."""
             logger.error(f"❌ AI Ethics Agent delegation failed: {e}")
             raise
     
+    async def _delegate_to_weather(self, question: str, thread: Optional[ChatHistory] = None) -> str:
+        """Delegate a question to the Weather agent and return the response.
+        
+        Args:
+            question: The question to ask the Weather agent
+            thread: Optional thread for conversation context
+            
+        Returns:
+            The Weather agent's response as a string
+        """
+        logger.info(f"🔄 Delegating to Weather Agent: '{question[:100]}{'...' if len(question) > 100 else ''}'")
+        start_time = time.time()
+        
+        try:
+            response = await self.weather_agent.invoke(question, thread)
+            response_time = time.time() - start_time
+            logger.info(f"✅ Weather Agent responded in {response_time:.2f}s: '{response[:100]}{'...' if len(response) > 100 else ''}'")
+            return response
+        except Exception as e:
+            logger.error(f"❌ Weather Agent delegation failed: {e}")
+            raise
+    
     async def handle_request(self, user_input: str, thread: Optional[ChatHistory] = None) -> str:
         """Handle a user request, coordinating with other agents as needed.
         
@@ -215,12 +249,30 @@ Be professional, clear, and ensure every user interaction is valuable."""
             "automation ethics", "ai employment", "ai education", "ai healthcare ethics"
         ]
         
-        is_ai_ethics_question = any(keyword in user_input.lower() for keyword in ai_ethics_keywords)
+        # Check for weather topics
+        weather_keywords = [
+            "weather", "temperature", "rain", "snow", "sunny", "cloudy", "wind",
+            "humidity", "forecast", "climate", "precipitation", "storm", "sunshine",
+            "degrees", "celsius", "fahrenheit", "hot", "cold", "warm", "cool",
+            "weather in", "weather for", "how's the weather", "what's the weather"
+        ]
         
-        logger.info(f"📊 Analysis: is_question={is_question}, word_count={word_count}, is_ai_ethics={is_ai_ethics_question}")
+        is_ai_ethics_question = any(keyword in user_input.lower() for keyword in ai_ethics_keywords)
+        is_weather_question = any(keyword in user_input.lower() for keyword in weather_keywords)
+        
+        logger.info(f"📊 Analysis: is_question={is_question}, word_count={word_count}, is_ai_ethics={is_ai_ethics_question}, is_weather={is_weather_question}")
         
         try:
-            if is_ai_ethics_question:
+            if is_weather_question:
+                logger.info("🎯 DECISION: Delegating to Weather Agent (weather-related question)")
+                weather_response = await self._delegate_to_weather(user_input, thread)
+                final_response = f"Here's the current weather information you requested:\n\n{weather_response}"
+                
+                response_time = time.time() - start_time
+                logger.info(f"✅ ORCHESTRATOR: Completed Weather delegation in {response_time:.2f}s")
+                return final_response
+                
+            elif is_ai_ethics_question:
                 logger.info("🎯 DECISION: Delegating to AI Ethics Agent (ethics-related question)")
                 ethics_response = await self._delegate_to_ai_ethics(user_input, thread)
                 final_response = f"Here's an expert analysis on the AI ethics topic you asked about:\n\n{ethics_response}"

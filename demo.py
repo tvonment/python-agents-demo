@@ -37,8 +37,11 @@ async def demo_orchestrator():
         # Test questions
         test_questions = [
             "What is artificial intelligence?",
-            "How can I improve my productivity?",
-            "Explain the benefits of cloud computing"
+            "How can I improve my productivity?", 
+            "Explain the benefits of cloud computing",
+            "What's the weather in London?",
+            "How's the weather in New York City right now?",
+            "Tell me about AI ethics and human dependency on technology"
         ]
         
         for i, question in enumerate(test_questions, 1):
@@ -104,7 +107,8 @@ def print_help():
     print("Available commands:")
     print("  python demo.py                    - Run orchestrator demo")
     print("  python demo.py orchestrator       - Run orchestrator demo")
-    print("  python demo.py customer-support   - Run customer support QnA demo") 
+    print("  python demo.py customer-support   - Run customer support QnA demo")
+    print("  python test_weather_agent.py      - Test weather agent directly")
     print("  python demo.py help               - Show this help")
     print("="*50)
 

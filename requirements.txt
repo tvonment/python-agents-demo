@@ -10,6 +10,7 @@ azure-ai-documentintelligence>=1.0.0
 
 # Utilities
 python-dotenv>=1.0.0
+requests>=2.31.0
 
 # Development
 black>=24.0.0
